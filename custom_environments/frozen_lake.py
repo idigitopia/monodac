@@ -7,7 +7,7 @@ import math
 import numpy as np
 from collections import namedtuple
 import time
-
+import random
 class FrozenLakeEnv():
 
     def __init__(self, map_size: tuple):
@@ -110,7 +110,7 @@ class FrozenLakeEnv():
         return reward
 
     def reset(self):
-        self.state = 0
+        self.state = random.randint(0,self.GetStateSpace()-self.nrow)
         return np.array([self.state])
 
     def step(self, a):

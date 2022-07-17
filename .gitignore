@@ -6,3 +6,4 @@ lmdp.egg-info
 *result*
 *wandb*
 *history*
+*.vscode*

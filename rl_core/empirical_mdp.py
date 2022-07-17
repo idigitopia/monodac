@@ -39,8 +39,9 @@ class MDPBuild:
 
 
         nn,aa,tt = n_core_states,n_actions, n_targets
-        Tp_raw = torch.zeros((nn,aa,tt)).to(device='cpu').type(torch.float32)
         Ti = torch.zeros((nn,aa,tt)).to(device='cpu').type(torch.LongTensor)
+        Tp_raw = torch.zeros((nn,aa,tt)).to(device='cpu').type(torch.LongTensor)
+        Tp = torch.zeros((nn,aa,tt)).to(device='cpu').type(torch.float32)
         R_raw = torch.zeros((nn,aa,tt)).to(device='cpu').type(torch.float32)
         R = torch.zeros((nn,aa,tt)).to(device='cpu').type(torch.float32)
         Q = torch.zeros((nn,aa)).to(device='cpu').type(torch.float32)
@@ -51,7 +52,7 @@ class MDPBuild:
             s_i, a_i, ns_i = S.index(torch.tensor(s)),\
                             A.index(torch.tensor(a)),\
                             S.index(torch.tensor(ns))
-
+                        
             if d:
                 ns_i = S.index(S[0])
             
@@ -80,7 +81,11 @@ class MDPBuild:
 
 
 
+
 class MDP:
+    """
+    Simple MDP with a small number of Discrete Actions.
+    """
 
     def __init__(self,space_vectors,core_vectors, gamma = 0.99):
 
@@ -90,16 +95,24 @@ class MDP:
         self.S.index = lambda s:MDPBuild.fetch_row_index(S,s)
         self.A.index = lambda s:MDPBuild.fetch_row_index(A,s)
 
-
+        # Action index track the index of the action for which we are tracking the target states.
+        # Tran index tracks the index of each target state. 
+        # Tran prob tracks the prob of landing on each target state. 
+        # R tracks the reward for each target state
+        # Q tracks the Q value for each action slots.
+        # V tracks the value for each state
+        # Pi tracks the best action slot for each state 
         Ti, Tp, R, Q, V, Pi = core_vectors
         # Sanity check 
         n,a,t = Ti.shape # Number of States, Number of Actions, Number of Target States
+        # assert Ai.shape == (n,a) , (Ti.shape , Ai.shape)
         assert Tp.shape == (n,a,t) , (Ti.shape , Tp.shape)
         assert R.shape == (n,a,t), (Ti.shape , R.shape)
         assert Q.shape == (n,a), (Ti.shape , Q.shape)
         assert V.shape == (n,) , (Ti.shape , V.shape, n)
         assert Pi.shape == (n,), (Ti.shape , Pi.shape, n)
 
+        # self.Ai = torch.LongTensor(Ai).to(device='cuda')
         self.Ti = torch.LongTensor(Ti).to(device='cuda')
         self.Tp = torch.FloatTensor(Tp).to(device='cuda')
         self.R = torch.FloatTensor(R).to(device='cuda')
@@ -170,6 +183,6 @@ def sanity_check():
     curr_error = 10
     gamma = 0.99
     for i in tqdm(range(2000)):
-        epsilon, V, Pi = bellman_backup(Ti, Tp, R, Q, V)
+        epsilon, V, Pi = MDP.bellman_backup(Ti, Tp, R, Q, V)
         if i%250 == 0:
             print(i,epsilon)
